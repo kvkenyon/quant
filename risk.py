@@ -28,6 +28,16 @@ class ReturnSeries:
         return self.returns
 
 
+def get_ffme_returns():
+    ffme = pd.read_csv("data/Portfolios_Formed_on_ME_monthly_EW.csv",
+                       header=0, index_col=0, parse_dates=True, na_values=-99.99)
+    rets = ffme[['Lo 10', 'Hi 10']]
+    rets.columns = ['SmallCap', 'LargeCap']
+    rets /= 100
+    rets.index = pd.to_datetime(rets.index, format="%Y%m").to_period('M')
+    return rets
+
+
 def get_hfi_returns():
     hfi = pd.read_csv("data/edhec-hedgefundindices.csv", header=0, index_col=0,
                       parse_dates=True)
