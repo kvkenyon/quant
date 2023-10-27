@@ -82,3 +82,10 @@ def higher_moment(r, k):
 def is_normal(r, level=0.01):
     _, p_value = scipy.stats.jarque_bera(r)
     return p_value > level
+
+
+def cornish_fisher_expansion(s, k, za):
+    return za + (1/6)*(za**2 - 1)*s + (1/24)*(za**3 - 3*za)*(k-3)-(1/36)*(2*(za**3)-5*za)*(s**2)
+
+def semideviation(r):
+    return r[r<0].std(ddof=0)
