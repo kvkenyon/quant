@@ -1,6 +1,6 @@
 import pandas as pd
-import scipy.stats
-
+from scipy.stats import (jarque_bera, norm)
+import numpy as np
 
 class ReturnSeries:
     """
@@ -80,7 +80,7 @@ def higher_moment(r, k):
 
 
 def is_normal(r, level=0.01):
-    _, p_value = scipy.stats.jarque_bera(r)
+    _, p_value = jarque_bera(r)
     return p_value > level
 
 
@@ -89,3 +89,32 @@ def cornish_fisher_expansion(s, k, za):
 
 def semideviation(r):
     return r[r<0].std(ddof=0)
+
+def var_historic(r, level=5):
+    """
+    Returns the historic VaR of a DataFrame or Series.
+    It will compute the the level-percentile of the data.
+    """
+    if isinstance(r, pd.DataFrame):
+        return r.aggregate(var_historic, level=level)
+    elif isinstance(r, pd.Series):
+        return -np.percentile(r, level)
+    else:
+        raise TypeError("Expected r to be a Series or DataFrame")
+
+def var_gaussian(r, level=5, modified=False):        
+    z = norm.ppf(level/100)
+    if modified:
+        skew = skewness(r)
+        kurt = kurtosis(r)
+        z = cornish_fisher_expansion(skew, kurt, z)
+    return -(r.mean() + z*r.std(ddof=0))
+
+def cvar_historic(r, level=5):
+    if isinstance(r, pd.DataFrame):
+        return r.aggregate(cvar_historic, level=level)
+    elif isinstance(r, pd.Series):
+        is_beyond = r <= -var_historic(r, level)
+        return -r[is_beyond].mean()
+    else:
+        raise TypeError("Expected r to be Series or DataFrame")
